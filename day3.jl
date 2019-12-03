@@ -2,7 +2,7 @@ wires = open("wires.csv") do f
     split.(readlines(f), ",")
 end
 
-function shortest_distance(wires)
+function parse_paths(wires)
     paths = []
 
     for w in wires
@@ -27,8 +27,29 @@ function shortest_distance(wires)
         end
         push!(paths, path)
     end
+
+    return paths
+end
+
+function shortest_distance(wires)::Int
+    paths = parse_paths(wires)
     
     return minimum(sum.((x -> abs.(x)).(intersect(paths[1], paths[2]))))
 end
 
+function shortest_delay(wires)::Int
+    paths = parse_paths(wires)
+    intersections = intersect(paths[1], paths[2])
+    
+    delays = []
+    for i in intersections
+        s1 = findfirst(x -> x==i, paths[1])
+        s2 = findfirst(x -> x==i, paths[2])
+        push!(delays, s1+s2)
+    end
+    
+    return minimum(delays)
+end
+
 println(shortest_distance(wires))
+println(shortest_delay(wires))
