@@ -9,21 +9,19 @@ function shortest_distance(wires)
         coord = (0, 0)
         path = []
         for p in w
-            d = p[1]
-            if d == 'U'
-                dir = (0, 1)
-            elseif d == 'R'
-                dir = (1, 0)
-            elseif d == 'D'
-                dir = (0, -1)
-            elseif d == 'L'
-                dir = (-1, 0)
+            dir = if p[1] == 'U'
+                (0, 1)
+            elseif p[1] == 'R'
+                (1, 0)
+            elseif p[1] == 'D'
+                (0, -1)
+            elseif p[1] == 'L'
+                (-1, 0)
             else
-                throw(ErrorException("Invalid direction: " * d))
+                throw(ErrorException("Invalid direction: " * p[1]))
             end
-            len = parse(Int, p[2:end])
-            for i = 1:len
-                coord = coord .+ (dir)
+            for i = 1:(parse(Int, p[2:end]))
+                coord = coord .+ dir
                 push!(path, coord)
             end
         end
