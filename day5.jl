@@ -1,9 +1,7 @@
 function run_intcode(program, input)
     pointer = 1
-    i = 0
-    while pointer <= length(program) && i < 1000
+    while pointer <= length(program)
         # println(program)
-        i = i + 1
         instruction = reverse(digits(program[pointer], pad=5))
         # println(instruction)
         opcode = instruction[end] + instruction[end-1]*10
@@ -12,19 +10,19 @@ function run_intcode(program, input)
         if opcode == 1 # add
             pt1 = program[pointer+1]
             pt2 = program[pointer+2]
+            pt3 = program[pointer+3]
             val1 = modes[1] == 0 ? program[pt1+1] : pt1
             val2 = modes[2] == 0 ? program[pt2+1] : pt2
-            pt3 = program[pointer+3]+1    
-            program[pt3] = val1 + val2
+            program[pt3+1] = val1 + val2
             pointer = pointer + 4
-        elseif opcode == 2 # multiply          
+        elseif opcode == 2 # multiply
             pt1 = program[pointer+1]
             pt2 = program[pointer+2]
+            pt3 = program[pointer+3]
             val1 = modes[1] == 0 ? program[pt1+1] : pt1
             val2 = modes[2] == 0 ? program[pt2+1] : pt2
-            pt3 = program[pointer+3]+1
             # println(join([modes, pt1, pt2, val1, val2, val1*val2], ","))
-            program[pt3] = val1 * val2
+            program[pt3+1] = val1 * val2
             pointer = pointer + 4
         elseif opcode == 3 # store input
             pt1 = program[pointer+1]
@@ -32,9 +30,9 @@ function run_intcode(program, input)
             pointer = pointer + 2
         elseif opcode == 4 # output
             pt1 = program[pointer+1]
-            val1 = modes[1] == 0 ? program[pt1+1] : pt1
-            println(val1)
+            val1 = modes[1] == 0 ? program[pt1+1] : pt1            
             pointer = pointer + 2
+            println(val1)
         elseif opcode == 5 # jump if true
             pt1 = program[pointer+1]
             pt2 = program[pointer+2]
@@ -61,7 +59,7 @@ function run_intcode(program, input)
             pt3 = program[pointer+3]
             val1 = modes[1] == 0 ? program[pt1+1] : pt1
             val2 = modes[2] == 0 ? program[pt2+1] : pt2
-            program[pt3+1] = val1 < val2 ? 1 : 0 
+            program[pt3+1] = val1 < val2 ? 1 : 0
             pointer = pointer + 4
         elseif opcode == 8 # equal
             pt1 = program[pointer+1]
@@ -69,14 +67,13 @@ function run_intcode(program, input)
             pt3 = program[pointer+3]
             val1 = modes[1] == 0 ? program[pt1+1] : pt1
             val2 = modes[2] == 0 ? program[pt2+1] : pt2
-            program[pt3+1] = val1 == val2 ? 1 : 0 
+            program[pt3+1] = val1 == val2 ? 1 : 0
             pointer = pointer + 4
         elseif opcode == 99
             break
         else
             throw(ErrorException("Invalid opcode: " * string(opcode)))
         end
-        
     end
 end
 
