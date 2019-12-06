@@ -1,7 +1,3 @@
-orbits = open("orbitmap.txt") do f
-    split.(readlines(f), ")")
-end
-
 mutable struct Node
     name::String
     parent::Union{Node, Nothing}
@@ -9,16 +5,14 @@ mutable struct Node
 end
 Base.show(io::IO, z::Node) = print(io, z.name)
 
-objects = Node[]
-
 function find_or_create(name::AbstractString, arr::Array{Node,1})::Node
     i = findfirst(x -> x.name == name, arr)
     if i == nothing
         n = Node(name, nothing, [])
-        push!(objects, n)
+        push!(arr, n)
         return n
     else
-        return objects[i]
+        return arr[i]
     end
 end
 
@@ -40,28 +34,41 @@ function climb_to(node::Node, target::Node, arr = Node[])::Array{Node,1}
     end
 end
 
-for o in orbits
-    parent_name, child_name = o
-    parent = find_or_create(parent_name, objects)
-    child = find_or_create(child_name, objects)
-    push!(parent.children, child)
-    child.parent = parent
-end
-
-orbit_count = 0
-for o in objects
-    global orbit_count
-    if o.name == "COM"
-        continue
+function build_orbitmap()::Array{Node,1}
+    data = open("orbitmap.txt") do f
+        split.(readlines(f), ")")
     end
-    orbit_count = orbit_count + length(climb(o))
-end
-println(orbit_count)
+    objects = Node[]    
+    for o in data
+        parent_name, child_name = o
+        parent = find_or_create(parent_name, objects)
+        child = find_or_create(child_name, objects)
+        push!(parent.children, child)
+        child.parent = parent
+    end
 
-you = find_or_create("YOU", objects)
-santa = find_or_create("SAN", objects)
-root = intersect(climb(you), climb(santa))[1]
-# println(root)
-# println(climb_to(you, root))
-# println(climb_to(santa, root))
-println(length(climb_to(you, root)) + length(climb_to(santa, root)) - 2)
+    return objects        
+end
+
+function orbit_count(objects::Array{Node,1})::Int
+    orbit_count = 0
+    for o in objects
+        orbit_count = orbit_count + length(climb(o))
+    end
+
+    return orbit_count    
+end
+
+function orbit_distance(from::Node, to::Node)::Int
+    root = intersect(climb(from), climb(to))[1]
+
+    return length(climb_to(you, root)) + length(climb_to(santa, root)) - 2
+end
+
+orbitmap = build_orbitmap()
+
+println(orbit_count(orbitmap))
+
+you = find_or_create("YOU", orbitmap)
+santa = find_or_create("SAN", orbitmap)
+println(orbit_distance(you, santa))
