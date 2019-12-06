@@ -25,20 +25,20 @@ function run_intcode(program, x, y)::Int
     return program[1]
 end
 
-open("intcode.csv") do f
-    program = parse.(Int, split(readlines(f)[1], ","))
-    println(run_intcode(deepcopy(program), 12, 2))
-    for i in 0:99
-        for j in 0:99
-            res = try 
-                run_intcode(deepcopy(program), i, j)
-            catch e
-                -1
-            end
-            if res == 19690720
-                println(100*i+j)
-                break
-            end
+program = open("intcode.csv") do f
+    parse.(Int, split(readlines(f)[1], ","))
+end
+println(run_intcode(deepcopy(program), 12, 2))
+for i in 0:99
+    for j in 0:99
+        res = try 
+            run_intcode(deepcopy(program), i, j)
+        catch e
+            -1
+        end
+        if res == 19690720
+            println(100*i+j)
+            break
         end
     end
 end

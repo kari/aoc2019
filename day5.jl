@@ -77,8 +77,8 @@ function run_intcode(program, input)
     end
 end
 
-open("diagnostic.csv") do f
-    program = parse.(Int, split(readlines(f)[1], ","))
-    run_intcode(deepcopy(program), 1)
-    run_intcode(deepcopy(program), 5)
+program = open("diagnostic.csv") do f
+    parse.(Int, split(readlines(f)[1], ","))
 end
+run_intcode(deepcopy(program), 1)
+run_intcode(deepcopy(program), 5)

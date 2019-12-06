@@ -1,7 +1,3 @@
-wires = open("wires.csv") do f
-    split.(readlines(f), ",")
-end
-
 function parse_paths(wires)
     paths = []
 
@@ -51,5 +47,8 @@ function shortest_delay(wires)::Int
     return minimum(delays)
 end
 
+wires = open("wires.csv") do f
+    split.(readlines(f), ",")
+end
 println(shortest_distance(wires))
 println(shortest_delay(wires))
