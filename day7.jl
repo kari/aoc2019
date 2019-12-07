@@ -2,6 +2,7 @@ using Combinatorics
 
 function run_intcode(program::Array{Int,1}, phase::Int, input::Channel, output::Channel)
     pointer = 1
+    ret = nothing
     while pointer <= length(program)
         # println(program)
         instruction = reverse(digits(program[pointer], pad=5))
@@ -39,6 +40,7 @@ function run_intcode(program::Array{Int,1}, phase::Int, input::Channel, output::
             pt1 = program[pointer+1]
             val1 = modes[1] == 0 ? program[pt1+1] : pt1            
             pointer = pointer + 2
+            ret = val1
             put!(output, val1)
         elseif opcode == 5 # jump if true
             pt1 = program[pointer+1]
@@ -77,7 +79,7 @@ function run_intcode(program::Array{Int,1}, phase::Int, input::Channel, output::
             program[pt3+1] = val1 == val2 ? 1 : 0
             pointer = pointer + 4
         elseif opcode == 99
-            break
+            return ret
         else
             throw(ErrorException("Invalid opcode: " * string(opcode)))
         end
@@ -93,16 +95,17 @@ function find_max_signal(program::Array{Int,1}, phases::Array{Int,1})::Int
         c_in = Channel(1)
         d_in = Channel(1)
         e_in = Channel(1)
-        e_out = Channel(1)
-        @async run_intcode(deepcopy(program), phase[1], a_in, b_in)
-        @async run_intcode(deepcopy(program), phase[2], b_in, c_in)
-        @async run_intcode(deepcopy(program), phase[3], c_in, d_in)
-        @async run_intcode(deepcopy(program), phase[4], d_in, e_in)
-        @async run_intcode(deepcopy(program), phase[5], e_in, e_out)
-        put!(a_in, 0)
-        thrusters = take!(e_out)
-        if thrusters > max
-            max = thrusters
+        e = 0
+        @sync begin
+            @async run_intcode(deepcopy(program), phase[1], a_in, b_in)
+            @async run_intcode(deepcopy(program), phase[2], b_in, c_in)
+            @async run_intcode(deepcopy(program), phase[3], c_in, d_in)
+            @async run_intcode(deepcopy(program), phase[4], d_in, e_in)
+            @async e = run_intcode(deepcopy(program), phase[5], e_in, a_in)
+            put!(a_in, 0)
+        end
+        if e > max
+            max = e
             settings = phase
         end
     end
@@ -110,10 +113,6 @@ function find_max_signal(program::Array{Int,1}, phases::Array{Int,1})::Int
     println(max)
     return max
 end
-
-# function feedback_loop(in, out)
-    
-# end
 
 program = open("thrusters.csv") do f
     parse.(Int, split(readlines(f)[1], ","))
@@ -124,4 +123,7 @@ end
 # phases = [0,1,2,3,4]
 # program = [3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0]
 # phases = [1,0,4,3,2]
-find_max_signal(program, [0,1,2,3,4])
+# find_max_signal(program, [0,1,2,3,4])
+# program = [3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26, 27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5]
+# program = [3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54, -5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4, 53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10]
+find_max_signal(program, [5,6,7,8,9])
