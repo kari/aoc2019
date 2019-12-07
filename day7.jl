@@ -1,8 +1,7 @@
 using Combinatorics
 
-function run_intcode(program, input)
+function run_intcode(program::Array{Int,1}, phase::Int, input::Channel, output::Channel)
     pointer = 1
-    ret = nothing
     while pointer <= length(program)
         # println(program)
         instruction = reverse(digits(program[pointer], pad=5))
@@ -29,14 +28,18 @@ function run_intcode(program, input)
             pointer = pointer + 4
         elseif opcode == 3 # store input
             pt1 = program[pointer+1]
-            program[pt1+1] = popfirst!(input)
+            if phase >= 0
+                program[pt1+1] = phase
+                phase = -1
+            else
+                program[pt1+1] = take!(input)
+            end
             pointer = pointer + 2
         elseif opcode == 4 # output
             pt1 = program[pointer+1]
             val1 = modes[1] == 0 ? program[pt1+1] : pt1            
             pointer = pointer + 2
-            # println(val1)
-            ret = val1
+            put!(output, val1)
         elseif opcode == 5 # jump if true
             pt1 = program[pointer+1]
             pt2 = program[pointer+2]
@@ -74,12 +77,43 @@ function run_intcode(program, input)
             program[pt3+1] = val1 == val2 ? 1 : 0
             pointer = pointer + 4
         elseif opcode == 99
-            return ret
+            break
         else
             throw(ErrorException("Invalid opcode: " * string(opcode)))
         end
     end
 end
+
+function find_max_signal(program::Array{Int,1}, phases::Array{Int,1})::Int
+    max = 0
+    settings = []
+    for phase in permutations(phases)
+        a_in = Channel(1)
+        b_in = Channel(1)
+        c_in = Channel(1)
+        d_in = Channel(1)
+        e_in = Channel(1)
+        e_out = Channel(1)
+        @async run_intcode(deepcopy(program), phase[1], a_in, b_in)
+        @async run_intcode(deepcopy(program), phase[2], b_in, c_in)
+        @async run_intcode(deepcopy(program), phase[3], c_in, d_in)
+        @async run_intcode(deepcopy(program), phase[4], d_in, e_in)
+        @async run_intcode(deepcopy(program), phase[5], e_in, e_out)
+        put!(a_in, 0)
+        thrusters = take!(e_out)
+        if thrusters > max
+            max = thrusters
+            settings = phase
+        end
+    end
+    println(settings)
+    println(max)
+    return max
+end
+
+# function feedback_loop(in, out)
+    
+# end
 
 program = open("thrusters.csv") do f
     parse.(Int, split(readlines(f)[1], ","))
@@ -90,19 +124,4 @@ end
 # phases = [0,1,2,3,4]
 # program = [3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0]
 # phases = [1,0,4,3,2]
-max = 0
-settings = []
-for phases in permutations([0,1,2,3,4])
-    global max, settings
-    a_out = run_intcode(deepcopy(program), [phases[1], 0])
-    b_out = run_intcode(deepcopy(program), [phases[2], a_out])
-    c_out = run_intcode(deepcopy(program), [phases[3], b_out])
-    d_out = run_intcode(deepcopy(program), [phases[4], c_out])
-    e_out = run_intcode(deepcopy(program), [phases[5], d_out])
-    if e_out > max
-        max = e_out
-        settings = phases
-    end
-end
-println(settings)
-println(max)
+find_max_signal(program, [0,1,2,3,4])
