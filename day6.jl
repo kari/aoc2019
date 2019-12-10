@@ -7,7 +7,7 @@ Base.show(io::IO, z::Node) = print(io, z.name)
 
 function find_or_create(name::AbstractString, arr::Array{Node,1})::Node
     i = findfirst(x -> x.name == name, arr)
-    if i == nothing
+    if i === nothing
         n = Node(name, nothing, [])
         push!(arr, n)
         return n
@@ -17,7 +17,7 @@ function find_or_create(name::AbstractString, arr::Array{Node,1})::Node
 end
 
 function climb(node::Node, arr = Node[])::Array{Node,1}
-    if node.parent == nothing
+    if node.parent === nothing
         return arr
     else
         climb(node.parent, push!(arr, node.parent))
@@ -27,7 +27,7 @@ end
 function climb_to(node::Node, target::Node, arr = Node[])::Array{Node,1}
     if node.name == target.name
         return arr
-    elseif node.parent == nothing
+    elseif node.parent === nothing
         throw(ErrorException("target node not found"))
     else
         climb_to(node.parent, target, push!(arr, node.parent))

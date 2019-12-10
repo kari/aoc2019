@@ -16,7 +16,7 @@ function write_pointer(pointer::Int, mode::Int, base::Int)::Int
     elseif mode == 2
         return pointer+base+1
     else
-        throw(ErrorException("Invalid mode for writing: "*modes[1]))
+        throw(ErrorException("Invalid mode for writing: " * mode))
     end
 end
 
