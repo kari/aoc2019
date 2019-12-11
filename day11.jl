@@ -125,13 +125,14 @@ function draw_map(map, robot, direction, min=nothing, max=nothing)
         end
     else
         for row in eachrow(map[min[2]-1:max[2]+1,:])
-            println(replace(replace(join(row[min[1]-1:max[1]+1]), "0" => "."), "1" => "#"))
+            println(replace(replace(join(row[min[1]-1:max[1]+1]), "0" => " "), "1" => "#"))
         end
     end
 end
 
 function process_output(in::Channel, out::Channel)
     hull = zeros(Int, 1000, 1000)
+    hull[500, 500] = 1
     robot = [500, 500]
     max = [500, 500]
     min = [500, 500]
