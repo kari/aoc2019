@@ -1,8 +1,4 @@
 using Combinatorics
-# <x=-16, y=15, z=-9>
-# <x=-14, y=5, z=4>
-# <x=2, y=0, z=6>
-# <x=-3, y=18, z=9>
 
 mutable struct Moon
     pos::Vector{Int}
@@ -10,9 +6,29 @@ mutable struct Moon
 end
 Moon(pos) = Moon(pos, zeros(Int, 3))
 Base.show(io::IO, m::Moon) = print("pos=<x = ",m.pos[1],", y= ",m.pos[2],", z= ",m.pos[3],">, vel=<x= ",m.v[1],", y= ",m.v[2],", z= ",m.v[3],">\n")
+Base.:(==)(a::Moon, b::Moon) = a.pos == b.pos && a.v == b.v
 
 function energy(m::Moon)::Int
     return sum(abs.(m.pos)) * sum(abs.(m.v))
+end
+
+function create_moons(positions::Array{Vector{Int}})::Vector{Moon}
+    moons = Moon[]
+    for i in 1:length(positions)
+        push!(moons, Moon(positions[i]))
+    end
+    return moons   
+end
+
+function simulate(moons::Array{Moon})
+    for pair in combinations(moons, 2)
+        a, b = pair
+        a.v = a.v + (a.pos .< b.pos) - (a.pos .> b.pos)
+        b.v = b.v + (b.pos .< a.pos) - (b.pos .> a.pos)
+    end
+    for moon in moons
+        moon.pos = moon.pos + moon.v
+    end
 end
 
 positions = [
@@ -34,21 +50,30 @@ positions = [
 #     [9, -8, -3],
 # ]
 
-
-moons = Moon[]
-for i in 1:length(positions)
-    push!(moons, Moon(positions[i]))
-end
-
+moons = create_moons(positions)
 for i in 1:1000
-    for pair in combinations(moons, 2)
-        a, b = pair
-        a.v = a.v + (a.pos .< b.pos) - (a.pos .> b.pos)
-        b.v = b.v + (b.pos .< a.pos) - (b.pos .> a.pos)
-    end
-    for moon in moons
-        moon.pos = moon.pos + moon.v
-    end
+    simulate(moons)
     # println(moons)
 end
-println(sum(energy.(moons)))
+println("Total energy: ", sum(energy.(moons)))
+
+state = create_moons(positions)
+history = [deepcopy(state)]
+counter = 0
+while true
+    # println(history)
+    global counter
+    counter = counter + 1
+    simulate(state)
+    # if counter >= 2770
+    #     println("After ", counter, " steps:")
+    #     println(state)
+    # end
+    if state in history
+        println(counter)
+        break
+    end
+    
+    push!(history, deepcopy(state))
+    
+end
