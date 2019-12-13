@@ -109,8 +109,10 @@ function run_intcode(program::Vector{Int}, input::Channel, output::Channel)::Int
 end
 
 function process_output(in::Channel, out::Channel)::Int
+    score = 0
     screen = zeros(100, 100)
-    x,y,tile = [0,0,0]
+    player, x,y,tile = [0,0,0,0]
+  
     while true
         try
             x = take!(in)
@@ -123,8 +125,24 @@ function process_output(in::Channel, out::Channel)::Int
                 rethrow
             end
         end
-        # println("(", x,", ",y,"): ",tile)
-        screen[x+1, y+1] = tile
+        println("(", x,", ",y,"): ",tile)
+        if x == -1 && y == 0
+            score = tile
+        else
+            screen[x+1, y+1] = tile
+        end
+        if tile == 3
+            player = x
+        end
+        if tile == 4
+            if player == x
+                put!(out, 0)
+            elseif player < x
+                put!(out, 1)
+            else
+                put!(out, -1)
+            end
+        end
     end
     return sum(x -> x == 2, screen)
 end
@@ -136,5 +154,6 @@ end
 in = Channel(1)
 out = Channel(2)
 
+program[1] = 2
 @async run_intcode(deepcopy(program), in, out)
 println(process_output(out, in))
