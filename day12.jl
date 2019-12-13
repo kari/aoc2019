@@ -92,9 +92,9 @@ function find_periods(positions::Array{Int,2})
     # moons = create_moons(positions)
     velocities = zeros(Int,4,3)
     counter = 0
-    #history = Array{Int}(undef, 1000)
+    history = Array{UInt64}(undef, 3, 1000000)
     #history[counter+1] = hash.(eachcol(vcat(positions, velocities)))
-    history = hash.(eachcol(vcat(positions, velocities)))
+    history[:, counter+1] = hash.(eachcol(vcat(positions, velocities)))
     periods = [0,0,0]
 
     while true
@@ -103,7 +103,7 @@ function find_periods(positions::Array{Int,2})
         entry = hash.(eachcol(vcat(positions, velocities)))
         for axis in 1:3
             if periods[axis] == 0
-                res = findfirst(x -> x == entry[axis], history[axis,:])
+                res = findfirst(x -> x == entry[axis], history[axis,1:counter])
                 if res != nothing 
                     println(counter, ": period found for axis ",axis, ": ", counter,"-",(res-1),"=", counter-(res-1))
                     periods[axis] = counter-(res-1)
@@ -113,7 +113,11 @@ function find_periods(positions::Array{Int,2})
         if sum(periods .> 0) == 3
             break
         end
-        history = hcat(history, entry)
+        if counter % 5000 == 0
+            println(counter)
+        end
+        # history = hcat(history, entry)
+        history[:,counter+1] = entry
     end
 
     return lcm(periods)
