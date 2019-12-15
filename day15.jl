@@ -397,13 +397,13 @@ function process_output(in::Channel, out::Channel)
         unique!(queue)
         # sort!(queue, by = x -> sqrt((x[1]-robot[1])^2 + (x[2]-robot[2])^2))
 
-        if counter % 200 == 0
-            println(counter, ": robot at ",robot,":")
-            #    draw_map(room, robot, direction, queue)
-            # draw_map(room, robot, queue[1], min, max)
+        # if counter % 200 == 0
+            # println(counter, ": robot at ",robot,":")
+            #draw_map(room, robot, direction, queue)
+            #  draw_map(room, robot, queue[1], min, max)
             # println("Queue: ", length(queue))
             #    println(queue)
-        end
+#        end
 
        direction = find_path_to(queue[1], robot, room)
 
@@ -412,10 +412,16 @@ function process_output(in::Channel, out::Channel)
     return room
 end
 
-function fill(arr, start)
-    min = findfirst(x -> x != 0, arr)
-    max = findlast(x -> x != 0, arr)
+function draw_oxygen(arr)
+    arr = map(x -> x >= 0 ? 7 : x, arr) # oxygen
+    arr = map(x -> x == -1 ? 1 : x, arr) # visited (empty of oxygen)    
+    arr = map(x -> x == -99 ? 2 : x, arr) # walls back
+    arr = map(x -> x == -98 ? 0 : x, arr) # emptiness back
 
+    draw_map(arr)
+end
+
+function fill(arr, start)
     i = 0
     arr = map(x -> x == 2 ? -99 : x == 0 ? -98 : -1, arr) # block walls
     
@@ -425,6 +431,7 @@ function fill(arr, start)
     # 2. wave expansion
     while true
         # println("Wave expansion #", i)
+        # draw_oxygen(arr)
         res = findall(x -> x == i, arr)
         if length(res) == 0
             break
@@ -448,13 +455,7 @@ function fill(arr, start)
         i = i + 1
     end
     
-    arr = map(x -> x >= 0 ? 7 : x, arr) # oxygen
-    arr = map(x -> x == -1 ? 1 : x, arr) # visited (empty of oxygen)    
-    arr = map(x -> x == -99 ? 2 : x, arr) # walls back
-    arr = map(x -> x == -98 ? 0 : x, arr) # emptiness back
-#    draw_map(arr, [min[2],min[1]], [max[2],max[1]])
-   draw_map(arr)
-
+    # draw_oxygen(arr)
 
     return i-1
 end
@@ -482,7 +483,7 @@ room =  if isfile("room.jls")
         else
             map_room()
         end
-draw_map(room)
+# draw_map(room)
 target = findfirst(x -> x == 3, room)
 steps = length(route([500,500], [target[2], target[1]], room))
 println("Shortest path to oxygen in ", steps, " steps")
